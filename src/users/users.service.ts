@@ -1,11 +1,12 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
+import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from '../auth/entities/user.entity';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { UpdateRolesDto } from './dto/update-roles.dto';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UsersService {

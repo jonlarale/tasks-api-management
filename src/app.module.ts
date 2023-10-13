@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { TasksModule } from './tasks/tasks.module';
-
 import { ConfigModule } from '@nestjs/config';
-import { AppConfig } from './config/app.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { JoiValidationSchema } from './config/joi.validation';
+
+import { TasksModule } from './tasks/tasks.module';
+import { AppConfig } from './config/app.config';
 import { UsersModule } from './users/users.module';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
-import { JoiValidationSchema } from './config/joi.validation';
 
 @Module({
   imports: [
