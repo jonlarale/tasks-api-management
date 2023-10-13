@@ -16,7 +16,7 @@ import { ErrorResponseDto } from 'src/common/dtos/error-response.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('register')
+  @Post('signup')
   @ApiResponse({
     status: 201,
     description: 'User created successfully',
