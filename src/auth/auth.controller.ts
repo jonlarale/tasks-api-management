@@ -1,20 +1,21 @@
 // Nestjs
 import { Controller, Post, Body } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CommandBus } from '@nestjs/cqrs';
 
 // Auth
-import { AuthService } from './auth.service';
 import { CreateUserDto, LoginUserDto } from './dto';
 import { User } from './entities/user.entity';
 import { LoginResponseDto } from './dto/login-response.dto';
 
 // Common
 import { ErrorResponseDto } from 'src/common/dtos/error-response.dto';
+import { CreateUserCommand, LoginUserCommand } from './commands/impl';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
   @Post('signup')
   @ApiResponse({
@@ -28,7 +29,7 @@ export class AuthController {
     type: ErrorResponseDto,
   })
   create(@Body() createAuthDto: CreateUserDto) {
-    return this.authService.create(createAuthDto);
+    return this.commandBus.execute(new CreateUserCommand(createAuthDto));
   }
 
   @Post('login')
@@ -44,6 +45,6 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   loginUser(@Body() loginUserDto: LoginUserDto) {
-    return this.authService.login(loginUserDto);
+    return this.commandBus.execute(new LoginUserCommand(loginUserDto));
   }
 }

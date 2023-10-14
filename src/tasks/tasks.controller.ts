@@ -15,7 +15,12 @@ import {
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 
 // Tasks
-import { TasksService } from './tasks.service';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CreateTaskCommand } from './commands/impl/create-task.command';
+import { UpdateTaskCommand } from './commands/impl/update-task.command';
+import { DeleteTaskCommand } from './commands/impl/delete-task.command';
+import { GetTasksQuery } from './queries/impl/get-tasks.query';
+import { GetTaskQuery } from './queries/impl/get-task.query';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 
@@ -33,7 +38,10 @@ import { ErrorResponseDto } from 'src/common/dtos/error-response.dto';
 @Controller('tasks')
 @Auth(ValidRoles.USER)
 export class TasksController {
-  constructor(private readonly tasksService: TasksService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   @Post()
   @ApiResponse({
@@ -51,7 +59,9 @@ export class TasksController {
     @Body() createTaskDto: CreateTaskDto,
     @GetUser(['id']) userId: string,
   ) {
-    return this.tasksService.create(createTaskDto, userId);
+    return this.commandBus.execute(
+      new CreateTaskCommand(createTaskDto, userId),
+    );
   }
 
   @Get()
@@ -73,7 +83,7 @@ export class TasksController {
     @Query() paginationDto: PaginationDto,
     @GetUser(['id']) userId: string,
   ) {
-    return this.tasksService.findAll(paginationDto, userId);
+    return this.queryBus.execute(new GetTasksQuery(paginationDto, userId));
   }
 
   @Get(':id')
@@ -93,7 +103,7 @@ export class TasksController {
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser(['id']) userId: string,
   ) {
-    return this.tasksService.findOne(id, userId);
+    return this.queryBus.execute(new GetTaskQuery(id, userId));
   }
 
   @Patch(':id')
@@ -117,7 +127,9 @@ export class TasksController {
     @Body() updateTaskDto: UpdateTaskDto,
     @GetUser(['id']) userId: string,
   ) {
-    return this.tasksService.update(id, updateTaskDto, userId);
+    return this.commandBus.execute(
+      new UpdateTaskCommand(id, updateTaskDto, userId),
+    );
   }
 
   @Delete(':id')
@@ -134,7 +146,7 @@ export class TasksController {
     @GetUser(['id']) userId: string,
     @Response() res: ExpressResponse,
   ) {
-    await this.tasksService.remove(id, userId);
+    await this.commandBus.execute(new DeleteTaskCommand(id, userId));
     res.status(204).send();
   }
 }

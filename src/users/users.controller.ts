@@ -13,9 +13,9 @@ import {
 } from '@nestjs/common';
 import { Response as ExpressResponse } from 'express';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 
 // Users
-import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 // Auth
@@ -24,15 +24,25 @@ import { ValidRoles } from 'src/auth/enums/valid-roles.enum';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from '../auth/entities/user.entity';
 import { UpdateRolesDto } from './dto/update-roles.dto';
+import { GetUsersQuery, GetUserQuery } from './queries/impl/';
 
 // Common
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ErrorResponseDto } from 'src/common/dtos/error-response.dto';
+import {
+  ActivateUserCommand,
+  DeleteUserCommand,
+  UpdateUserCommand,
+  UpdateUserRolesCommand,
+} from './commands/impl';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   @Get()
   @Auth(ValidRoles.ADMIN)
@@ -48,7 +58,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   findAll(@Query() paginationDto: PaginationDto) {
-    return this.usersService.findAll(paginationDto);
+    return this.queryBus.execute(new GetUsersQuery(paginationDto));
   }
 
   @Get(':id')
@@ -71,7 +81,7 @@ export class UsersController {
         'You are not authorized to view this user',
       );
     }
-    return this.usersService.findOne(id);
+    return this.queryBus.execute(new GetUserQuery(id));
   }
 
   @Patch(':id')
@@ -98,7 +108,7 @@ export class UsersController {
         'You are not authorized to update this user',
       );
     }
-    return this.usersService.update(id, updateUserDto);
+    return this.commandBus.execute(new UpdateUserCommand(id, updateUserDto));
   }
 
   @Delete(':id')
@@ -115,7 +125,7 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Response() res: ExpressResponse,
   ) {
-    await this.usersService.remove(id);
+    await this.commandBus.execute(new DeleteUserCommand(id));
     res.status(204).send();
   }
 
@@ -137,7 +147,7 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body('activated') activated: boolean,
   ) {
-    return this.usersService.updateStatus(id, activated);
+    return this.commandBus.execute(new ActivateUserCommand(id, activated));
   }
 
   @Patch(':id/roles')
@@ -158,6 +168,8 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateRolesDto: UpdateRolesDto,
   ) {
-    return this.usersService.updateRoles(id, updateRolesDto);
+    return this.commandBus.execute(
+      new UpdateUserRolesCommand(id, updateRolesDto),
+    );
   }
 }
