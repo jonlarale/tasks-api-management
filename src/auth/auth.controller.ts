@@ -1,6 +1,6 @@
 // Nestjs
-import { Controller, Post, Body } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Body } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { MessagePattern } from '@nestjs/microservices';
 import { JwtService } from '@nestjs/jwt';
@@ -10,11 +10,9 @@ import { UnauthorizedException } from '@nestjs/common';
 // Auth
 import { CreateUserDto, LoginUserDto } from './dto';
 import { User } from './entities/user.entity';
-import { LoginResponseDto } from './dto/login-response.dto';
 import { AuthCmd } from './enums/auth-cmd.enum';
 
 // Common
-import { ErrorResponseDto } from 'src/common/dtos/error-response.dto';
 import { CreateUserCommand, LoginUserCommand } from './commands/impl';
 import { GetUserQuery } from './queries/impl/';
 

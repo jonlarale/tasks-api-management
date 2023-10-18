@@ -1,12 +1,7 @@
-import {
-  BadRequestException,
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { Reflector } from '@nestjs/core';
+import { RpcException } from '@nestjs/microservices';
 
 import { META_ROLES } from 'src/auth/decorators/role-protected.decorator';
 import { User } from 'src/auth/entities/user.entity';
@@ -34,7 +29,11 @@ export class UserRoleGuard implements CanActivate {
     const user = req.user as User;
 
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new RpcException({
+        error: 'Not Found',
+        message: 'User not found',
+        statusCode: 404,
+      });
     }
 
     for (const role of user.roles) {
@@ -43,6 +42,10 @@ export class UserRoleGuard implements CanActivate {
       }
     }
 
-    throw new ForbiddenException('User does not have the required role');
+    throw new RpcException({
+      error: 'Unauthorized',
+      message: 'User does not have the required roles',
+      statusCode: 401,
+    });
   }
 }

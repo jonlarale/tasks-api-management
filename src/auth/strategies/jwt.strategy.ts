@@ -6,7 +6,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { ExtractJwt } from 'passport-jwt';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -25,10 +26,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
-      throw new UnauthorizedException('Token is invalid');
+      throw new RpcException({
+        error: 'Unauthorized',
+        message: 'Token is invalid',
+        statusCode: 401,
+      });
     }
     if (!user.activated) {
-      throw new UnauthorizedException('Token is invalid');
+      throw new RpcException({
+        error: 'Unauthorized',
+        message: 'User is not activated',
+        statusCode: 401,
+      });
     }
     return user;
   }

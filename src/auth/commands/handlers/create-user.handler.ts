@@ -2,10 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateUserCommand } from '../impl';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  InternalServerErrorException,
-  BadRequestException,
-} from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 
 import { User } from '../../entities/user.entity';
 
@@ -32,9 +29,17 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
   }
   private handleDBErrors(error: any): never {
     if (error.code === '23505') {
-      throw new BadRequestException('Email already exists');
+      throw new RpcException({
+        error: 'Bad Request',
+        message: 'User with this email already exists',
+        statusCode: 400,
+      });
     }
 
-    throw new InternalServerErrorException();
+    throw new RpcException({
+      error: 'Internal Server Error',
+      message: 'Something went wrong',
+      statusCode: 500,
+    });
   }
 }

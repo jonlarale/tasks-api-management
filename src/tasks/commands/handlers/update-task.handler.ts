@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NotFoundException } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 
 import { UpdateTaskCommand } from '../impl/update-task.command';
 import { Task } from '../../entities/task.entity';
@@ -21,7 +21,11 @@ export class UpdateTaskHandler implements ICommandHandler<UpdateTaskCommand> {
       userId: userId,
     });
     if (!task) {
-      throw new NotFoundException(`Task with id ${id} not found`);
+      throw new RpcException({
+        error: 'Not Found',
+        message: 'No Task with this ID found',
+        statusCode: 404,
+      });
     }
     await this.taskRepository.save(task);
     return task;

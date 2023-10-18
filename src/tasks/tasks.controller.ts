@@ -1,18 +1,6 @@
 // Nestjs
-import { Response as ExpressResponse } from 'express';
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  ParseUUIDPipe,
-  Query,
-  Response,
-} from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { MessagePattern } from '@nestjs/microservices';
 
 // Tasks
@@ -25,15 +13,8 @@ import { GetTaskQuery } from './queries/impl/get-task.query';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 
-// Auth
-import { Auth } from '../auth/decorators/auth.decorator';
-import { ValidRoles } from '../auth/enums/valid-roles.enum';
-import { GetUser } from '../auth/decorators/get-user.decorator';
-
 // Common
 import { PaginationDto } from '../common/dtos/pagination.dto';
-import { Task } from './entities/task.entity';
-import { ErrorResponseDto } from 'src/common/dtos/error-response.dto';
 import { TaskCmd } from './enums/task-cmd.enum';
 
 @ApiTags('Tasks')
