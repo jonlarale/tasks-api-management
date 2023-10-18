@@ -14,6 +14,7 @@ import {
 import { Response as ExpressResponse } from 'express';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { MessagePattern } from '@nestjs/microservices';
 
 // Users
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -35,6 +36,7 @@ import {
   UpdateUserCommand,
   UpdateUserRolesCommand,
 } from './commands/impl';
+import { UserCmd } from './enums/user-cmd.enum';
 
 @ApiTags('Users')
 @Controller('users')
@@ -44,38 +46,16 @@ export class UsersController {
     private readonly queryBus: QueryBus,
   ) {}
 
-  @Get()
-  @Auth(ValidRoles.ADMIN)
-  @ApiResponse({
-    status: 200,
-    description: 'Users retrieved successfully',
-    type: [User],
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request',
-    type: ErrorResponseDto,
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  findAll(@Query() paginationDto: PaginationDto) {
+  @MessagePattern(UserCmd.GET_ALL)
+  public findAll(@Query() paginationDto: PaginationDto) {
     return this.queryBus.execute(new GetUsersQuery(paginationDto));
   }
 
-  @Get(':id')
-  @Auth(ValidRoles.ADMIN, ValidRoles.USER)
-  @ApiResponse({
-    status: 200,
-    description: 'User retrieved successfully',
-    type: User,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request',
-    type: ErrorResponseDto,
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  findOne(@Param('id', ParseUUIDPipe) id: string, @GetUser() user: User) {
+  @MessagePattern(UserCmd.GET_ONE)
+  public findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser() user: User,
+  ) {
     if (user.id !== id || ValidRoles.ADMIN in user.roles) {
       throw new UnauthorizedException(
         'You are not authorized to view this user',
@@ -84,21 +64,8 @@ export class UsersController {
     return this.queryBus.execute(new GetUserQuery(id));
   }
 
-  @Patch(':id')
-  @Auth(ValidRoles.USER)
-  @ApiResponse({
-    status: 200,
-    description: 'User updated successfully',
-    type: User,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request',
-    type: ErrorResponseDto,
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  update(
+  @MessagePattern(UserCmd.UPDATE)
+  public update(
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser() user: User,
     @Body() updateUserDto: UpdateUserDto,
@@ -111,60 +78,21 @@ export class UsersController {
     return this.commandBus.execute(new UpdateUserCommand(id, updateUserDto));
   }
 
-  @Delete(':id')
-  @Auth(ValidRoles.ADMIN)
-  @ApiResponse({ status: 204, description: 'User deleted successfully' })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request',
-    type: ErrorResponseDto,
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  async remove(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Response() res: ExpressResponse,
-  ) {
-    await this.commandBus.execute(new DeleteUserCommand(id));
-    res.status(204).send();
+  @MessagePattern(UserCmd.DELETE)
+  public remove(@Param('id', ParseUUIDPipe) id: string) {
+    this.commandBus.execute(new DeleteUserCommand(id));
   }
 
-  @Patch(':id/activate')
-  @Auth(ValidRoles.ADMIN)
-  @ApiResponse({
-    status: 200,
-    description: 'User status updated successfully',
-    type: User,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request',
-    type: ErrorResponseDto,
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  activate(
+  @MessagePattern(UserCmd.ACTIVATE)
+  public activate(
     @Param('id', ParseUUIDPipe) id: string,
     @Body('activated') activated: boolean,
   ) {
     return this.commandBus.execute(new ActivateUserCommand(id, activated));
   }
 
-  @Patch(':id/roles')
-  @Auth(ValidRoles.ADMIN)
-  @ApiResponse({
-    status: 200,
-    description: 'User roles updated successfully',
-    type: User,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request',
-    type: ErrorResponseDto,
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  updateRoles(
+  @MessagePattern(UserCmd.UPDATE_ROLES)
+  public updateRoles(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateRolesDto: UpdateRolesDto,
   ) {

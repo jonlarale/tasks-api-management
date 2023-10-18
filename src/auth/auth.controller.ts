@@ -1,50 +1,59 @@
 // Nestjs
 import { Controller, Post, Body } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { MessagePattern } from '@nestjs/microservices';
+import { JwtService } from '@nestjs/jwt';
+import { Payload } from '@nestjs/microservices';
+import { UnauthorizedException } from '@nestjs/common';
 
 // Auth
 import { CreateUserDto, LoginUserDto } from './dto';
 import { User } from './entities/user.entity';
 import { LoginResponseDto } from './dto/login-response.dto';
+import { AuthCmd } from './enums/auth-cmd.enum';
 
 // Common
 import { ErrorResponseDto } from 'src/common/dtos/error-response.dto';
 import { CreateUserCommand, LoginUserCommand } from './commands/impl';
+import { GetUserQuery } from './queries/impl/';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+    private readonly jwtService: JwtService,
+  ) {}
 
-  @Post('signup')
-  @ApiResponse({
-    status: 201,
-    description: 'User created successfully',
-    type: User,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request',
-    type: ErrorResponseDto,
-  })
-  create(@Body() createAuthDto: CreateUserDto) {
+  @MessagePattern(AuthCmd.SIGN_UP)
+  public create(@Body() createAuthDto: CreateUserDto) {
     return this.commandBus.execute(new CreateUserCommand(createAuthDto));
   }
 
-  @Post('login')
-  @ApiResponse({
-    status: 200,
-    description: 'User logged in successfully',
-    type: LoginResponseDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request',
-    type: ErrorResponseDto,
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  loginUser(@Body() loginUserDto: LoginUserDto) {
+  @MessagePattern(AuthCmd.LOGIN)
+  public loginUser(@Body() loginUserDto: LoginUserDto) {
     return this.commandBus.execute(new LoginUserCommand(loginUserDto));
+  }
+
+  @MessagePattern(AuthCmd.AUTH_VERIFY)
+  public async verifyToken(
+    @Payload() payload: { accessToken: string },
+  ): Promise<User | null> {
+    try {
+      const { accessToken } = payload;
+      const decodedToken = this.jwtService.verify(accessToken);
+      const userId = decodedToken.id;
+      const user = await this.queryBus.execute(new GetUserQuery(userId));
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      return user;
+    } catch (error) {
+      throw new UnauthorizedException('Token is invalid');
+    }
   }
 }

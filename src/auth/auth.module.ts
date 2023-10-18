@@ -9,11 +9,14 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { AuthController } from './auth.controller';
 import { User } from './entities/user.entity';
 import { CreateUserHandler, LoginUserHandler } from './commands/handlers';
+import { GetUserHandler } from './queries/handlers';
 
 export const CommandHandlers = [CreateUserHandler, LoginUserHandler];
+export const QueryHandlers = [GetUserHandler];
+
 @Module({
   controllers: [AuthController],
-  providers: [JwtStrategy, ...CommandHandlers],
+  providers: [JwtStrategy, ...CommandHandlers, ...QueryHandlers],
   imports: [
     ConfigModule,
     CqrsModule,

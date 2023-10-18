@@ -6,8 +6,11 @@ export const AppConfig = () => ({
   dbPort: process.env.DATABASE_PORT,
   dbHost: process.env.DATABASE_HOST,
   port: process.env.PORT,
+  host: process.env.HOST,
   jwtSecret: process.env.JWT_SECRET,
   jwtExpirationTime: process.env.JWT_EXPIRATION_TIME,
   paginationLimit: process.env.PAGINATION_LIMIT,
   paginationOffset: process.env.PAGINATION_OFFSET,
+  prefix: process.env.PREFIX,
+  DOCUMENTATION_PATH: process.env.DOCUMENTATION_PATH,
 });
