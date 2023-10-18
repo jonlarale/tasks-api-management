@@ -25,6 +25,11 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
+## TCP
+
+To use TCP, you need to fetch tcp branch and clone api-gateway repository. Follow the instructions in the README.md file of the api-gateway repository. And make the
+request to port 4001 instead of 4002. (This can be changed in the .env file)
+
 ## User creation
 
 To create a user, you need to use the following endpoint:
