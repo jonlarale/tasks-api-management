@@ -2,7 +2,8 @@
 
 ## Description
 
-Manage tasks associated with authenticated and authorized users through this REST API.
+Manage tasks associated with authenticated and authorized users through this REST API. You can link this API with [Tasks API Gateway](https://github.com/jonlarale/task-api-gateway) to authorize and authenticate the endpoints.
+
 
 ## Installation
 
